@@ -32,7 +32,7 @@ endif()
 
 # Find C++ files
 file(REAL_PATH src SOURCE_PATH)
-file(GLOB_RECURSE EXTENSION_SOURCES LIST_DIRECTORIES false ${SOURCE_PATH}/amulet/*.py.cpp)
+file(GLOB_RECURSE EXTENSION_SOURCES LIST_DIRECTORIES false ${SOURCE_PATH}/amulet_faulthandler/*.py.cpp)
 
 # Add python extension
 pybind11_add_module(_faulthandler)
