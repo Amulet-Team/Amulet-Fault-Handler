@@ -19,24 +19,24 @@ void dump_stack(EXCEPTION_POINTERS* p)
     HANDLE thread = GetCurrentThread();
     SymInitialize(process, NULL, TRUE);
     CONTEXT ctx = *p->ContextRecord;
-    STACKFRAME64 stack {};
+    STACKFRAME64 frame {};
 
 #if defined(_M_AMD64)
-    stack.AddrPC.Offset = ctx.Rip;
-    stack.AddrPC.Mode = AddrModeFlat;
-    stack.AddrStack.Offset = ctx.Rsp;
-    stack.AddrStack.Mode = AddrModeFlat;
-    stack.AddrFrame.Offset = ctx.Rbp;
-    stack.AddrFrame.Mode = AddrModeFlat;
+    frame.AddrPC.Offset = ctx.Rip;
+    frame.AddrPC.Mode = AddrModeFlat;
+    frame.AddrStack.Offset = ctx.Rsp;
+    frame.AddrStack.Mode = AddrModeFlat;
+    frame.AddrFrame.Offset = ctx.Rbp;
+    frame.AddrFrame.Mode = AddrModeFlat;
 #define MACHINE IMAGE_FILE_MACHINE_AMD64
 
 #elif defined(_M_IX86)
-    stack.AddrPC.Offset = ctx.Eip;
-    stack.AddrPC.Mode = AddrModeFlat;
-    stack.AddrStack.Offset = ctx.Esp;
-    stack.AddrStack.Mode = AddrModeFlat;
-    stack.AddrFrame.Offset = ctx.Ebp;
-    stack.AddrFrame.Mode = AddrModeFlat;
+    frame.AddrPC.Offset = ctx.Eip;
+    frame.AddrPC.Mode = AddrModeFlat;
+    frame.AddrStack.Offset = ctx.Esp;
+    frame.AddrStack.Mode = AddrModeFlat;
+    frame.AddrFrame.Offset = ctx.Ebp;
+    frame.AddrFrame.Mode = AddrModeFlat;
 #define MACHINE IMAGE_FILE_MACHINE_I386
 
 #else
@@ -47,14 +47,14 @@ void dump_stack(EXCEPTION_POINTERS* p)
     printf("*** Exception 0x%x occured ***\n", p->ExceptionRecord->ExceptionCode);
 
     while (StackWalk64(
-        MACHINE, process, thread, &stack, &ctx, NULL, SymFunctionTableAccess64, SymGetModuleBase64, NULL)) {
+        MACHINE, process, thread, &frame, &ctx, NULL, SymFunctionTableAccess64, SymGetModuleBase64, NULL)) {
         // get symbol name for address
         char symbol_buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR)];
         SYMBOL_INFO* symbol = reinterpret_cast<SYMBOL_INFO*>(symbol_buffer);
         symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
         symbol->MaxNameLen = MAX_SYM_NAME;
         DWORD64 displacement = 0;
-        if (!SymFromAddr(process, (ULONG64)stack.AddrPC.Offset, &displacement, symbol)) {
+        if (!SymFromAddr(process, frame.AddrPC.Offset, &displacement, symbol)) {
             strcpy_s(symbol->Name, MAX_SYM_NAME, "<unknown>");
         }
 
@@ -62,7 +62,7 @@ void dump_stack(EXCEPTION_POINTERS* p)
 
         // try to get line
         DWORD disp;
-        if (SymGetLineFromAddr64(process, stack.AddrPC.Offset, &disp, &line)) {
+        if (SymGetLineFromAddr64(process, frame.AddrPC.Offset, &disp, &line)) {
             printf("in %s\n\tat %s, line: %lu, address: 0x%llx\n", line.FileName, symbol->Name, line.LineNumber, symbol->Address);
         } else {
             // failed to get line
@@ -70,7 +70,7 @@ void dump_stack(EXCEPTION_POINTERS* p)
             char module_name[MaxNameLen] = {};
             GetModuleHandleExA(
                 GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                reinterpret_cast<LPCTSTR>(stack.AddrPC.Offset),
+                reinterpret_cast<LPCTSTR>(frame.AddrPC.Offset),
                 &module_handle);
 
             // at least print module name
