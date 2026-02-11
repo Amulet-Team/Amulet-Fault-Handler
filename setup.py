@@ -55,7 +55,7 @@ class CMakeBuild(BuildExt):
                 [
                     "cmake",
                     *platform_args,
-                    f"-DPYTHON_EXECUTABLE={sys.executable}",
+                    f"-DPython3_ROOT_DIR={sys.base_prefix}",
                     f"-Dpybind11_DIR={fix_path(pybind11.get_cmake_dir())}",
                     f"-Damulet_faulthandler_DIR={fix_path(faulthandler_src_dir)}",
                     f"-DAMULET_FAULTHANDLER_EXT_DIR={fix_path(ext_dir)}",
@@ -66,11 +66,11 @@ class CMakeBuild(BuildExt):
             ).returncode:
                 raise RuntimeError("Error configuring amulet-faulthandler")
             if subprocess.run(
-                ["cmake", "--build", tempdir, "--config", "Release"]
+                ["cmake", "--build", tempdir, "--config", "RelWithDebInfo"]
             ).returncode:
                 raise RuntimeError("Error building amulet-faulthandler")
             if subprocess.run(
-                ["cmake", "--install", tempdir, "--config", "Release"]
+                ["cmake", "--install", tempdir, "--config", "RelWithDebInfo"]
             ).returncode:
                 raise RuntimeError("Error installing amulet-faulthandler")
 
