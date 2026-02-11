@@ -83,6 +83,7 @@ void dump_stack(EXCEPTION_POINTERS* p)
 }
 
 static std::wstring _path;
+static bool _full_dump = false;
 
 void dump_process(EXCEPTION_POINTERS* p)
 {
@@ -99,13 +100,13 @@ void dump_process(EXCEPTION_POINTERS* p)
         MINIDUMP_EXCEPTION_INFORMATION info;
         info.ThreadId = GetCurrentThreadId();
         info.ExceptionPointers = p;
-        info.ClientPointers = FALSE;
+        info.ClientPointers = TRUE;
 
         MiniDumpWriteDump(
             GetCurrentProcess(),
             GetCurrentProcessId(),
             dump_handle,
-            MiniDumpWithFullMemory,
+            _full_dump ? MiniDumpWithFullMemory : MiniDumpNormal,
             &info,
             nullptr,
             nullptr);
@@ -122,9 +123,10 @@ LONG WINAPI CrashHandler(EXCEPTION_POINTERS* p)
 
 namespace Amulet {
 namespace faulthandler {
-    void install(std::filesystem::path path)
+    void install(std::filesystem::path path, bool full_dump)
     {
         _path = path.wstring();
+        _full_dump = full_dump;
         SetUnhandledExceptionFilter(CrashHandler);
     }
 }
@@ -134,7 +136,7 @@ namespace faulthandler {
 
 namespace Amulet {
 namespace faulthandler {
-    void install(std::filesystem::path path)
+    void install(std::filesystem::path path, bool full_dump)
     {
     }
 }

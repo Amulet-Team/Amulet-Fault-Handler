@@ -10,7 +10,8 @@ void init_module(py::module m)
     m.def(
         "install",
         &Amulet::faulthandler::install,
-        py::arg("path"));
+        py::arg("path"),
+        py::arg("full_dump"));
 }
 
 PYBIND11_MODULE(_faulthandler, m)
