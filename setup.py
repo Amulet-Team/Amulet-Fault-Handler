@@ -29,11 +29,12 @@ class CMakeBuild(BuildExt):
         import pybind11
 
         ext_dir = (
-            (Path.cwd() / self.get_ext_fullpath("")).parent.resolve()
-            / "amulet_faulthandler"
-        )
+            Path.cwd() / self.get_ext_fullpath("")
+        ).parent.resolve() / "amulet_faulthandler"
         faulthandler_src_dir = (
-            Path.cwd() / "src" / "amulet_faulthandler" if self.editable_mode else ext_dir
+            Path.cwd() / "src" / "amulet_faulthandler"
+            if self.editable_mode
+            else ext_dir
         )
 
         platform_args = []
