@@ -76,8 +76,10 @@ endif()
 
 # Install
 install(TARGETS _faulthandler DESTINATION ${AMULET_FAULTHANDLER_EXT_DIR})
-install(
-    FILES $<TARGET_PDB_FILE:_faulthandler>
-    DESTINATION ${AMULET_FAULTHANDLER_EXT_DIR}
-    OPTIONAL
-)
+if(MSVC)
+    install(
+        FILES $<TARGET_PDB_FILE:_faulthandler>
+        DESTINATION ${AMULET_FAULTHANDLER_EXT_DIR}
+        OPTIONAL
+    )
+endif()
