@@ -1,4 +1,4 @@
-recursive-include src/amulet *.cpp *.hpp *Config.cmake
+recursive-include src/amulet_faulthandler *.cpp *.hpp
 
 include CMakeLists.txt
 
