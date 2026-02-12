@@ -38,6 +38,7 @@ jobs:
     - name: Build
       run: |
         pip install -v .[dev]
+        python tools/compile_tests.py
         
     - name: Test with unittest
       run: python -m unittest discover -v -s tests

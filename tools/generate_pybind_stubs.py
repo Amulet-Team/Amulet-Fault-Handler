@@ -158,6 +158,7 @@ def main() -> None:
     # out_dir, module_dir, module_name
     modules: list[tuple[str, str, str]] = [
         (src_path, amulet_faulthandler_path, "amulet_faulthandler"),
+        (tests_path, tests_path, "_test_amulet_faulthandler"),
     ]
 
     # Remove all existing stub files
