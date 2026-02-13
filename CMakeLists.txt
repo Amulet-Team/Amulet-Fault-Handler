@@ -64,7 +64,6 @@ target_compile_definitions(_faulthandler PRIVATE PYBIND11_DETAILED_ERROR_MESSAGE
 target_sources(_faulthandler PRIVATE ${EXTENSION_SOURCES})
 if(MSVC)
     string(REPLACE ".pyd" "" PY_EXT_NO_PYD "${PYTHON_MODULE_EXTENSION}")
-    file(GENERATE OUTPUT "C:/Users/james/Downloads/name.txt" CONTENT "_faulthandler${PY_EXT_NO_PYD}")
     set_target_properties(_faulthandler PROPERTIES
         PDB_NAME "_faulthandler${PY_EXT_NO_PYD}"
     )
