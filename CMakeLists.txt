@@ -12,7 +12,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Set platform variables
 if (WIN32)
 	# set windows 7 as the minimum version
-	add_definitions(-D_WIN32_WINNT=0x0602)
+	add_definitions(-D_WIN32_WINNT=0x0601)
 elseif(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15")
 elseif(UNIX)
