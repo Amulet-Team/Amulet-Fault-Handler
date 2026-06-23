@@ -13,10 +13,10 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
-          - { os: windows-2025, python-version: '3.11', architecture: x64 }
-          - { os: windows-2025, python-version: '3.12', architecture: x64 }
-          - { os: windows-11-arm, python-version: '3.11', architecture: arm64 }
-          - { os: windows-11-arm, python-version: '3.12', architecture: arm64 }
+          - { os: windows-2025-vs2026, python-version: '3.11', architecture: x64 }
+          - { os: windows-2025-vs2026, python-version: '3.12', architecture: x64 }
+          - { os: windows-11-vs2026-arm, python-version: '3.11', architecture: arm64 }
+          - { os: windows-11-vs2026-arm, python-version: '3.12', architecture: arm64 }
           - { os: macos-15, python-version: '3.11', architecture: arm64 }
           - { os: macos-15, python-version: '3.12', architecture: arm64 }
 
