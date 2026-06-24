@@ -28,7 +28,7 @@ def subprocess_main(func: Callable[[], Any], log_path: str, dump_path: str):
 
 
 class FaulthandlerTestCase(unittest.TestCase):
-    def _call_in_subprocess(self, func: Callable[[], Any], exit_code: int):
+    def _call_in_subprocess(self, func: Callable[[], Any], exit_code: int, crash_optional: bool = False):
         with TemporaryDirectory() as temp_directory:
             p = multiprocessing.Process(
                 target=subprocess_main,
@@ -40,6 +40,9 @@ class FaulthandlerTestCase(unittest.TestCase):
             )
             p.start()
             p.join()
+            if crash_optional and not p.exitcode:
+                # Some crashes (heap corruption) do not manifest on all platforms (windows arm64)
+                return
             if sys.platform == "win32":
                 self.assertEqual(exit_code, p.exitcode)
                 self.assertTrue(
@@ -55,7 +58,7 @@ class FaulthandlerTestCase(unittest.TestCase):
         self._call_in_subprocess(throw_stack_overflow, 0xC00000FD)
 
     def test_throw_heap_corruption(self) -> None:
-        self._call_in_subprocess(throw_double_free, 0xC0000374)
+        self._call_in_subprocess(throw_double_free, 0xC0000374, True)
 
 
 if __name__ == "__main__":
