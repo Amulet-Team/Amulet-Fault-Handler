@@ -28,7 +28,9 @@ def subprocess_main(func: Callable[[], Any], log_path: str, dump_path: str):
 
 
 class FaulthandlerTestCase(unittest.TestCase):
-    def _call_in_subprocess(self, func: Callable[[], Any], exit_code: int, crash_optional: bool = False):
+    def _call_in_subprocess(
+        self, func: Callable[[], Any], exit_code: int, crash_optional: bool = False
+    ):
         with TemporaryDirectory() as temp_directory:
             p = multiprocessing.Process(
                 target=subprocess_main,
