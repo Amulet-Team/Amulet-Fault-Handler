@@ -11,13 +11,17 @@ void throw_access_violation(){
 void throw_stack_overflow(){
     throw_stack_overflow();
 }
-#pragma optimize("", on)
 
 void throw_heap_corruption(){
+    int* p = new int;
+    delete p;
+    delete p;
+
     char *cp = new char[10];
     (*(cp - 5))++;
-    free(cp);
+    delete cp;
 }
+#pragma optimize("", on)
 
 PYBIND11_MODULE(_test_amulet_faulthandler, m)
 {
