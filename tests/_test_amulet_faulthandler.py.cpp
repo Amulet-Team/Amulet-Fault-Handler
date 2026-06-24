@@ -1,5 +1,9 @@
 #include <pybind11/pybind11.h>
 
+#if _WIN32
+#include <windows.h>
+#endif
+
 namespace py = pybind11;
 
 void throw_access_violation(){
@@ -13,14 +17,14 @@ void throw_stack_overflow(){
 }
 
 void throw_heap_corruption(){
+
+#if _WIN32
+    HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
+#endif
+
     int* p = new int;
     delete p;
     delete p;
-
-    char* cp = new char[32];
-    for (int i = 1; i <= 16; i++)
-        (*(cp - i)) = 0xFF;
-    delete[] cp;
 }
 #pragma optimize("", on)
 
