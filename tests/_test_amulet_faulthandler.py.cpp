@@ -17,9 +17,10 @@ void throw_heap_corruption(){
     delete p;
     delete p;
 
-    char *cp = new char[10];
-    (*(cp - 5))++;
-    delete cp;
+    char* cp = new char[32];
+    for (int i = 1; i <= 16; i++)
+        (*(cp - i)) = 0xFF;
+    delete[] cp;
 }
 #pragma optimize("", on)
 
