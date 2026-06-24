@@ -40,7 +40,7 @@ class CMakeBuild(BuildExt):
 
         platform_args = []
         if sys.platform == "win32":
-            platform_args.extend(["-G", "Visual Studio 17 2022"])
+            platform_args.extend(["-G", "Visual Studio 18 2026"])
             if sysconfig.get_platform() == "win-amd64":
                 platform_args.extend(["-A", "x64"])
             elif sysconfig.get_platform() == "win32":

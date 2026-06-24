@@ -1,5 +1,11 @@
 from __future__ import annotations
 
-__all__: list[str] = ["throw_access_violation"]
+__all__: list[str] = [
+    "throw_access_violation",
+    "throw_double_free",
+    "throw_stack_overflow",
+]
 
 def throw_access_violation() -> None: ...
+def throw_double_free() -> None: ...
+def throw_stack_overflow() -> None: ...
