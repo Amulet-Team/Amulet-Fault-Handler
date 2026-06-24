@@ -12,7 +12,7 @@ void throw_stack_overflow(){
     throw_stack_overflow();
 }
 
-void throw_heap_corruption(){
+void throw_double_free(){
     int* p = new int;
     delete p;
     delete p;
@@ -23,5 +23,5 @@ PYBIND11_MODULE(_test_amulet_faulthandler, m)
 {
     m.def("throw_access_violation", throw_access_violation);
     m.def("throw_stack_overflow", throw_stack_overflow);
-    m.def("throw_heap_corruption", throw_heap_corruption);
+    m.def("throw_double_free", throw_double_free);
 }

@@ -12,7 +12,7 @@ import amulet_faulthandler
 from _test_amulet_faulthandler import (
     throw_access_violation,
     throw_stack_overflow,
-    throw_heap_corruption,
+    throw_double_free,
 )
 
 
@@ -55,7 +55,7 @@ class FaulthandlerTestCase(unittest.TestCase):
         self._call_in_subprocess(throw_stack_overflow, 0xC00000FD)
 
     def test_throw_heap_corruption(self) -> None:
-        self._call_in_subprocess(throw_heap_corruption, 0xC0000374)
+        self._call_in_subprocess(throw_double_free, 0xC0000374)
 
 
 if __name__ == "__main__":
