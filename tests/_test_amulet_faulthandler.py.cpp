@@ -1,6 +1,6 @@
 #include <pybind11/pybind11.h>
 
-#if _WIN32
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
@@ -18,7 +18,7 @@ void throw_stack_overflow(){
 
 void throw_heap_corruption(){
 
-#if _WIN32
+#ifdef _WIN32
     HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
 #endif
 
