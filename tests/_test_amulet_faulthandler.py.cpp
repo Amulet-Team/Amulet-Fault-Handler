@@ -15,16 +15,20 @@ void throw_access_violation(){
 void throw_stack_overflow(){
     throw_stack_overflow();
 }
+#pragma optimize("", on)
 
+#pragma optimize("", off)
 void throw_heap_corruption(){
-
 #ifdef _WIN32
     HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
 #endif
-
-    int* p = new int;
-    delete p;
-    delete p;
+    char* cp = new char[32];
+    for (int i = 1; i <= 64; i++) {
+        *(cp - i) = 0xFF;
+        *(cp + 32 + i) = 0xFF;
+    }
+    delete[] cp;
+    delete[] cp;
 }
 #pragma optimize("", on)
 
