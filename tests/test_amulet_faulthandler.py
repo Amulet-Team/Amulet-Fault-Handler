@@ -3,7 +3,6 @@ import multiprocessing
 import os
 import sys
 from tempfile import TemporaryDirectory
-import faulthandler
 from collections.abc import Callable
 from typing import Any
 
@@ -17,14 +16,12 @@ from _test_amulet_faulthandler import (
 )
 
 
-def setup_faulthandler(log_path: str, dump_path: str):
-    log_file = open(log_path, "w")
-    faulthandler.enable(log_file)
+def setup_faulthandler(dump_path: str):
     amulet_faulthandler.install(dump_path, False)
 
 
-def subprocess_main(func: Callable[[], Any], log_path: str, dump_path: str):
-    setup_faulthandler(log_path, dump_path)
+def subprocess_main(func: Callable[[], Any], dump_path: str):
+    setup_faulthandler(dump_path)
     func()
 
 
@@ -37,7 +34,6 @@ class FaulthandlerTestCase(unittest.TestCase):
                 target=subprocess_main,
                 args=(
                     func,
-                    os.path.join(temp_directory, "log.txt"),
                     os.path.join(temp_directory, "crash.dmp"),
                 ),
             )
@@ -64,7 +60,7 @@ class FaulthandlerTestCase(unittest.TestCase):
         self._call_in_subprocess(throw_double_free, 0xC0000374, True)
 
     def test_abort(self) -> None:
-        self._call_in_subprocess(throw_abort, 3)
+        self._call_in_subprocess(throw_abort, 0xC0000409)
 
 
 if __name__ == "__main__":

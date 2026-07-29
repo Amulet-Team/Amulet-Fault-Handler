@@ -3,22 +3,19 @@
 #ifdef _WIN32
 
 #include <windows.h>
-
 #include <dbghelp.h>
+#include <werapi.h>
 
 #include <mutex>
 #include <optional>
 #include <string>
+#include <filesystem>
+#include <stdexcept>
 
-struct DumpConfig {
-    std::wstring path;
-    std::wstring ext;
-    bool full_dump;
-    std::uint16_t dump_index;
-};
+#include "wer.hpp"
 
 static std::mutex _lock;
-static std::optional<DumpConfig> _dump_config;
+static DumpConfig _dump_config;
 
 struct CrashStack {
     DWORD code;
@@ -32,7 +29,7 @@ thread_local static CrashStack _crash_stack;
 
 static DWORD WINAPI dump_thread(LPVOID param) {
     std::lock_guard lock(_lock);
-    if (!_dump_config) {
+    if (!_dump_config.is_set()) {
         return 0;
     }
 
@@ -43,9 +40,9 @@ static DWORD WINAPI dump_thread(LPVOID param) {
     swprintf_s(
         path,
         L"%ls_%u%ls",
-        _dump_config->path.c_str(),
-        _dump_config->dump_index++,
-        _dump_config->ext.c_str());
+        _dump_config.path,
+        _dump_config.dump_index++,
+        _dump_config.ext);
 
     // Open the file
     HANDLE dump_handle = CreateFileW(
@@ -59,7 +56,7 @@ static DWORD WINAPI dump_thread(LPVOID param) {
 
     if (dump_handle != INVALID_HANDLE_VALUE) {
         // Write the dump
-        MINIDUMP_EXCEPTION_INFORMATION info;
+        MINIDUMP_EXCEPTION_INFORMATION info{};
         info.ThreadId = args->crashing_thread_id;
         info.ExceptionPointers = args->exc_info;
         info.ClientPointers = TRUE;
@@ -68,7 +65,7 @@ static DWORD WINAPI dump_thread(LPVOID param) {
             GetCurrentProcess(),
             GetCurrentProcessId(),
             dump_handle,
-            _dump_config->full_dump ? MiniDumpWithFullMemory : MiniDumpNormal,
+            _dump_config.full_dump ? MiniDumpWithFullMemory : MiniDumpNormal,
             &info,
             nullptr,
             nullptr);
@@ -100,30 +97,58 @@ static LONG WINAPI exc_handler(EXCEPTION_POINTERS* exc_info) noexcept
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
+void RegisterWerModule()
+{
+    // Get the path to the wer module
+    HMODULE mod = NULL;
+    if (
+        GetModuleHandleExW(
+            GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+            reinterpret_cast<LPCWSTR>(&RegisterWerModule), &mod
+        ) == 0
+    ){
+        DWORD ret = GetLastError();
+        throw std::runtime_error("GetModuleHandleExW failed: " + std::to_string(ret));
+    }
+    wchar_t fault_handler_path[MAX_PATH];
+    if (
+        GetModuleFileNameW(mod, fault_handler_path, MAX_PATH) == 0
+    ){
+        DWORD ret = GetLastError();
+        throw std::runtime_error("GetModuleFileNameW failed: " + std::to_string(ret));
+    }
+    auto wer_path = std::filesystem::path(fault_handler_path).parent_path() / "amulet_wer.dll";
+
+    // Register the WER module
+    HRESULT hr = WerRegisterRuntimeExceptionModule(
+        wer_path.c_str(),
+        reinterpret_cast<PDWORD64>(&_dump_config));
+
+    if (FAILED(hr)){
+        throw std::runtime_error("WerRegisterRuntimeExceptionModule failed: " + std::to_string(hr));
+    }
+}
+
 namespace Amulet {
 namespace faulthandler {
     void install(std::filesystem::path path, bool full_dump)
     {
         std::lock_guard lock(_lock);
-        if (_dump_config) {
+        if (_dump_config.is_set()) {
             throw std::runtime_error("Faulthandler is already installed");
         }
-        _dump_config.emplace();
-        _dump_config->path = path.replace_extension().wstring();
-        _dump_config->ext = path.extension().wstring();
-        if (_dump_config->ext.empty()) {
-            _dump_config->ext = L".dmp";
-        }
-        if (MAX_PATH < _dump_config->path.size() + _dump_config->ext.size() + 6) {
-            _dump_config = std::nullopt;
-            throw std::runtime_error("Path is too long for Windows");
-        }
-        _dump_config->full_dump = full_dump;
-        _dump_config->dump_index = 0;
+        auto ext = path.extension();
+
+        _dump_config.set(
+            path.replace_extension().c_str(),
+            ext.c_str(),
+            full_dump
+        );
         AddVectoredExceptionHandler(1, exc_handler);
+        RegisterWerModule();
     }
-}
-}
+} // namespace faulthandler
+} // namespace Amulet
 
 #else
 
@@ -132,7 +157,7 @@ namespace faulthandler {
     void install(std::filesystem::path path, bool full_dump)
     {
     }
-}
-}
+} // namespace faulthandler
+} // namespace Amulet
 
 #endif
