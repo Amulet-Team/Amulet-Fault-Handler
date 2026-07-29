@@ -47,11 +47,20 @@ jobs:
 
     - name: Setup cmake
       uses: jwlawson/actions-setup-cmake@v2
-        
+
     - name: Build
       run: |
         pip install -v .[dev]
         python tools/compile_tests.py
-        
+
+    - name: Register Exception Module (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $moduleDir = python -c "import amulet_faulthandler; print(amulet_faulthandler.__path__[0])"
+        $dllPath = Join-Path $moduleDir "amulet_wer.dll"
+        $key = "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting\RuntimeExceptionHelperModules"
+        New-ItemProperty -Path $key -Name $dllPath -Value 0 -PropertyType DWord -Force
+
     - name: Test with unittest
       run: python -m unittest discover -v -s tests
