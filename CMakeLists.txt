@@ -62,7 +62,7 @@ set_target_properties(_faulthandler PROPERTIES FOLDER "Python")
 target_link_libraries(_faulthandler PRIVATE faulthandler)
 target_compile_definitions(_faulthandler PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)
 target_sources(_faulthandler PRIVATE ${EXTENSION_SOURCES})
-if(MSVC)
+if (WIN32)
     string(REPLACE ".pyd" "" PY_EXT_NO_PYD "${PYTHON_MODULE_EXTENSION}")
     set_target_properties(_faulthandler PROPERTIES
         PDB_NAME "_faulthandler${PY_EXT_NO_PYD}"
@@ -75,7 +75,7 @@ endif()
 
 # Install
 install(TARGETS _faulthandler DESTINATION ${AMULET_FAULTHANDLER_EXT_DIR})
-if(MSVC)
+if (WIN32)
     install(
         FILES $<TARGET_PDB_FILE:_faulthandler>
         DESTINATION ${AMULET_FAULTHANDLER_EXT_DIR}
