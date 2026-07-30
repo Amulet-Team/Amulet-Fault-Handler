@@ -36,7 +36,7 @@ public:
         if (path_len == 0)
             throw std::invalid_argument("path is undefined");
         if (path_len >= MAX_PATH)
-            throw std::invalid_argument("path path is too long");
+            throw std::invalid_argument("path is too long");
         if (ext_len >= 16)
             throw std::invalid_argument("ext is too long");
         if (MAX_PATH < path_len + max(ext_len, 4) + 6) {
