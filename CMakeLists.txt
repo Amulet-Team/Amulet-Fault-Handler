@@ -35,18 +35,9 @@ endif()
 # Find C++ files
 file(REAL_PATH src SOURCE_PATH)
 file(GLOB_RECURSE EXTENSION_SOURCES LIST_DIRECTORIES false ${SOURCE_PATH}/amulet_faulthandler/*.py.cpp)
-
-if (WIN32)
-    add_library(amulet_wer SHARED)
-    set_target_properties(amulet_wer PROPERTIES FOLDER "CPP")
-    target_link_libraries(amulet_wer PRIVATE dbghelp)
-    target_sources(amulet_wer PRIVATE
-        ${SOURCE_PATH}/amulet_faulthandler/wer.hpp
-        ${SOURCE_PATH}/amulet_faulthandler/wer.cpp)
-    source_group(amulet_faulthandler FILES
-        ${SOURCE_PATH}/amulet_faulthandler/wer.hpp
-        ${SOURCE_PATH}/amulet_faulthandler/wer.cpp)
-endif()
+file(GLOB_RECURSE SOURCES LIST_DIRECTORIES false ${SOURCE_PATH}/amulet_faulthandler/*.cpp)
+file(GLOB_RECURSE HEADERS LIST_DIRECTORIES false ${SOURCE_PATH}/amulet_faulthandler/*.hpp)
+list(REMOVE_ITEM SOURCES ${EXTENSION_SOURCES})
 
 # Add implementation
 add_library(faulthandler STATIC)
@@ -55,26 +46,20 @@ if (WIN32)
     target_link_libraries(faulthandler PRIVATE dbghelp)
 endif()
 target_include_directories(faulthandler PUBLIC ${SOURCE_PATH})
-if (WIN32)
-    target_sources(faulthandler PRIVATE
-        ${SOURCE_PATH}/amulet_faulthandler/wer.hpp)
-    source_group(amulet_faulthandler FILES
-        ${SOURCE_PATH}/amulet_faulthandler/wer.hpp)
-endif()
-target_sources(faulthandler PRIVATE
-    ${SOURCE_PATH}/amulet_faulthandler/faulthandler.hpp
-    ${SOURCE_PATH}/amulet_faulthandler/faulthandler.cpp)
-source_group(amulet_faulthandler FILES
-    ${SOURCE_PATH}/amulet_faulthandler/faulthandler.hpp
-    ${SOURCE_PATH}/amulet_faulthandler/faulthandler.cpp)
+target_sources(faulthandler PRIVATE ${SOURCES} ${HEADERS})
+foreach(FILE ${SOURCES} ${HEADERS})
+    file(RELATIVE_PATH REL_PATH ${SOURCE_PATH} ${FILE})
+    get_filename_component(GROUP ${REL_PATH} DIRECTORY)
+    string(REPLACE "/" "\\" GROUP ${GROUP})
+    source_group(${GROUP} FILES ${FILE})
+endforeach()
 
 # Add python extension
 pybind11_add_module(_faulthandler)
 set_target_properties(_faulthandler PROPERTIES FOLDER "Python")
 target_link_libraries(_faulthandler PRIVATE faulthandler)
 target_compile_definitions(_faulthandler PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)
-target_sources(_faulthandler PRIVATE
-    ${SOURCE_PATH}/amulet_faulthandler/_faulthandler.py.cpp)
+target_sources(_faulthandler PRIVATE ${EXTENSION_SOURCES})
 if (WIN32)
     string(REPLACE ".pyd" "" PY_EXT_NO_PYD "${PYTHON_MODULE_EXTENSION}")
     set_target_properties(_faulthandler PROPERTIES
@@ -94,5 +79,4 @@ if (WIN32)
         DESTINATION ${AMULET_FAULTHANDLER_EXT_DIR}
         OPTIONAL
     )
-    install(TARGETS amulet_wer DESTINATION ${AMULET_FAULTHANDLER_EXT_DIR})
 endif()

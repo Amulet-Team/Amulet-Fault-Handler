@@ -53,20 +53,5 @@ jobs:
         pip install -v .[dev]
         python tools/compile_tests.py
 
-    - name: Register Exception Module (Windows)
-      if: runner.os == 'Windows'
-      shell: pwsh
-      run: |
-        $moduleDir = python -c "import amulet_faulthandler; print(amulet_faulthandler.__path__[0])"
-        $dllPath = Join-Path $moduleDir "amulet_wer.dll"
-        $key = "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting\RuntimeExceptionHelperModules"
-        New-ItemProperty -Path $key -Name $dllPath -Value 0 -PropertyType DWord -Force
-
     - name: Test with unittest
       run: python -m unittest discover -v -s tests
-
-    - name: Check events (Windows)
-      if: failure()
-      shell: pwsh
-      run: |
-        Get-WinEvent -LogName Application -MaxEvents 20 | Where-Object {$_.ProviderName -like "*Windows Error Reporting*" -or $_.ProviderName -like "*Application Error*"}
