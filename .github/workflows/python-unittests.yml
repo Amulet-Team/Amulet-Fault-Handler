@@ -57,9 +57,6 @@ jobs:
       if: runner.os == 'Windows'
       shell: pwsh
       run: |
-        Get-Service WerSvc | Select-Object Status, StartType
-        Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting' -Name Disabled -ErrorAction SilentlyContinue
-        Get-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting' -Name Disabled -ErrorAction SilentlyContinue
         $moduleDir = python -c "import amulet_faulthandler; print(amulet_faulthandler.__path__[0])"
         $dllPath = Join-Path $moduleDir "amulet_wer.dll"
         $key = "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting\RuntimeExceptionHelperModules"
@@ -67,3 +64,9 @@ jobs:
 
     - name: Test with unittest
       run: python -m unittest discover -v -s tests
+
+    - name: Check events (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        Get-WinEvent -LogName Application -MaxEvents 20 | Where-Object {$_.ProviderName -like "*Windows Error Reporting*" -or $_.ProviderName -like "*Application Error*"}
