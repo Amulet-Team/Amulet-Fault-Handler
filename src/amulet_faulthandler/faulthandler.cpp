@@ -12,6 +12,7 @@
 #include <stdexcept>
 #include <cstdint>
 #include <cwchar>
+#include <csignal>
 
 class DumpConfig {
 public:
@@ -116,24 +117,46 @@ static DWORD WINAPI dump_thread(LPVOID param) {
     return 0;
 }
 
-static LONG WINAPI exc_handler(EXCEPTION_POINTERS* exc_info) noexcept
+static void create_dump_file(DWORD code, EXCEPTION_POINTERS* exc_info)
+{
+    _crash_stack.code = code;
+    _crash_stack.exc_info = exc_info;
+    _crash_stack.crashing_thread_id = GetCurrentThreadId();
+    _crash_stack.done_event = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+    _crash_stack.thread = CreateThread(nullptr, 0, dump_thread, &_crash_stack, 0, nullptr);
+    if (_crash_stack.thread) {
+        WaitForSingleObject(_crash_stack.done_event, 30000);
+        CloseHandle(_crash_stack.thread);
+    }
+    CloseHandle(_crash_stack.done_event);
+}
+
+static LONG WINAPI vectored_exception_handler(EXCEPTION_POINTERS* exc_info) noexcept
 {
     // Get the crash code
-    _crash_stack.code = exc_info->ExceptionRecord->ExceptionCode;
+    DWORD code = exc_info->ExceptionRecord->ExceptionCode;
     // Skip some errors and non-errors
-    if (_crash_stack.code & 0x80000000 && _crash_stack.code != 0xE06D7363 && _crash_stack.code != 0xE0434352 && _crash_stack.code != STATUS_GUARD_PAGE_VIOLATION) {
-        _crash_stack.exc_info = exc_info;
-        _crash_stack.crashing_thread_id = GetCurrentThreadId();
-        _crash_stack.done_event = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-        _crash_stack.thread = CreateThread(nullptr, 0, dump_thread, &_crash_stack, 0, nullptr);
-        if (_crash_stack.thread) {
-            WaitForSingleObject(_crash_stack.done_event, 30000);
-            CloseHandle(_crash_stack.thread);
-        }
-        CloseHandle(_crash_stack.done_event);
+    if (code & 0x80000000 && code != 0xE06D7363 && code != 0xE0434352 && code != STATUS_GUARD_PAGE_VIOLATION) {
+        create_dump_file(code, exc_info);
     }
     // Continue to the next handler
     return EXCEPTION_CONTINUE_SEARCH;
+}
+
+static void abort_handler(int code)
+{
+    CONTEXT ctx{};
+    ctx.ContextFlags = CONTEXT_FULL;
+    // The crash dump will point here but the issue is actually a few stack frames above
+    RtlCaptureContext(&ctx);
+
+    EXCEPTION_RECORD record{};
+    record.ExceptionCode = 0xC0000409; // Technically not true but it will become this.
+    record.ExceptionAddress = _ReturnAddress();
+
+    EXCEPTION_POINTERS exc_info{ &record, &ctx };
+
+    create_dump_file(code, &exc_info);
 }
 
 namespace Amulet {
@@ -151,7 +174,8 @@ namespace faulthandler {
             ext.c_str(),
             full_dump
         );
-        AddVectoredExceptionHandler(1, exc_handler);
+        AddVectoredExceptionHandler(1, vectored_exception_handler);
+        std::signal(SIGABRT, abort_handler);
     }
 } // namespace faulthandler
 } // namespace Amulet
