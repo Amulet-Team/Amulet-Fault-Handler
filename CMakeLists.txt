@@ -39,6 +39,7 @@ file(GLOB_RECURSE SOURCES LIST_DIRECTORIES false ${SOURCE_PATH}/amulet_faulthand
 file(GLOB_RECURSE HEADERS LIST_DIRECTORIES false ${SOURCE_PATH}/amulet_faulthandler/*.hpp)
 list(REMOVE_ITEM SOURCES ${EXTENSION_SOURCES})
 
+
 # Add implementation
 add_library(faulthandler STATIC)
 set_target_properties(faulthandler PROPERTIES FOLDER "CPP")
@@ -53,6 +54,7 @@ foreach(FILE ${SOURCES} ${HEADERS})
     string(REPLACE "/" "\\" GROUP ${GROUP})
     source_group(${GROUP} FILES ${FILE})
 endforeach()
+
 
 # Add python extension
 pybind11_add_module(_faulthandler)

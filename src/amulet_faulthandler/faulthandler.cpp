@@ -13,15 +13,14 @@
 #include <cstdint>
 #include <cwchar>
 
-class DumpConfig
-{
+class DumpConfig {
 public:
     std::uint16_t dump_index;
     wchar_t path[MAX_PATH];
     wchar_t ext[16];
     bool full_dump;
 
-    DumpConfig(const wchar_t* path_, const wchar_t* ext_, bool full_dump_) : {
+    DumpConfig(const wchar_t* path_, const wchar_t* ext_, bool full_dump_) {
         dump_index = 0;
 
         if (!path_ || !ext_){
